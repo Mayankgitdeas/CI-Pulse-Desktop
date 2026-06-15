@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cognizant CI Pulse — Admin Panel</title>
+<style>
+  :root{
+    --cog-navy:#0D1243; --cog-blue:#0057B8; --cog-teal:#00B5B8;
+    --cog-blue-light:#E6F0FB; --cog-blue-dark:#003E80; --cog-bg:#F4F7FB;
+    --cog-card:#FFFFFF; --cog-border:#E2E8F2; --cog-border-soft:#F1F4F9;
+    --cog-text:#0D1243; --cog-text-muted:#5A6A7A; --cog-text-dim:#8899AA;
+    --cog-green:#059669; --cog-amber:#D97706; --cog-red:#DC2626;
+    --shadow-sm:0 1px 3px rgba(13,18,67,.06); --shadow-md:0 4px 12px rgba(13,18,67,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--cog-bg);color:var(--cog-text);min-height:100vh;}
+
+  /* ─── HEADER ────────────────────────────────────────────────────────── */
+  .header{background:#fff;border-bottom:1px solid var(--cog-border);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .cog-logo{height:24px;width:auto;}
+  .brand-divider{width:1px;height:18px;background:var(--cog-border);}
+  .brand-meta{display:flex;flex-direction:column;}
+  .brand-label{font-size:9px;font-weight:600;color:var(--cog-text-dim);letter-spacing:.1em;text-transform:uppercase;line-height:1;}
+  .brand-product{font-size:13px;font-weight:700;color:var(--cog-navy);letter-spacing:-.2px;line-height:1.2;margin-top:2px;}
+  .header-right{display:flex;align-items:center;gap:14px;}
+  .header-link{font-size:12.5px;color:var(--cog-text-muted);text-decoration:none;font-weight:500;}
+  .header-link:hover{color:var(--cog-blue);}
+  .logout-btn{background:none;border:1px solid var(--cog-border);color:var(--cog-text-muted);padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .logout-btn:hover{border-color:var(--cog-red);color:var(--cog-red);}
+
+  /* ─── SCRAPE BUTTON ────────────────────────────────────────────────── */
+  .scrape-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;background:linear-gradient(135deg,var(--cog-teal) 0%,var(--cog-blue) 100%);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:var(--shadow-sm);}
+  .scrape-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+  .scrape-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+  .scrape-btn .spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ─── LAYOUT ────────────────────────────────────────────────────────── */
+  .container{max-width:1280px;margin:0 auto;padding:24px 22px 60px;}
+  .page-title{font-size:24px;font-weight:800;color:var(--cog-navy);letter-spacing:-.4px;margin-bottom:4px;}
+  .page-sub{font-size:13px;color:var(--cog-text-muted);margin-bottom:20px;}
+
+  /* ─── DRAFTS SECTION ───────────────────────────────────────────────── */
+  .drafts-section{background:linear-gradient(135deg,#FFF7E6 0%,#FEF3C7 100%);border:1px solid #FCD34D;border-radius:14px;padding:18px;margin-bottom:22px;box-shadow:var(--shadow-sm);}
+  .drafts-section.empty{display:none;}
+  .drafts-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .drafts-title{display:flex;align-items:center;gap:10px;}
+  .drafts-icon{width:32px;height:32px;border-radius:50%;background:#D97706;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;}
+  .drafts-heading{font-size:15px;font-weight:800;color:#78350F;}
+  .drafts-sub{font-size:11.5px;color:#92400E;margin-top:2px;}
+  .drafts-count-badge{font-size:11px;font-weight:700;padding:3px 10px;background:#D97706;color:#fff;border-radius:14px;}
+  .drafts-grid{display:grid;grid-template-columns:1fr;gap:9px;}
+  .draft-card{background:#fff;border:1px solid #FCD34D;border-radius:10px;padding:11px 14px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;}
+  .draft-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;}
+  .draft-comp-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--cog-blue-light);color:var(--cog-blue);}
+  .draft-impact-dot{width:7px;height:7px;border-radius:50%;}
+  .draft-impact-dot.hi{background:var(--cog-red);}
+  .draft-impact-dot.med{background:var(--cog-amber);}
+  .draft-impact-dot.lo{background:var(--cog-green);}
+  .draft-date{font-size:11px;color:var(--cog-text-dim);}
+  .draft-headline{font-size:13.5px;font-weight:600;color:var(--cog-navy);line-height:1.45;}
+  .draft-source{font-size:10.5px;color:var(--cog-text-dim);margin-top:5px;font-style:italic;}
+  .draft-suggested{font-size:10.5px;color:var(--cog-text-muted);margin-top:3px;}
+  .draft-suggested b{font-weight:600;color:var(--cog-blue);}
+  .draft-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+  .draft-btn{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--cog-border);background:#fff;color:var(--cog-text-muted);white-space:nowrap;}
+  .draft-btn.primary{background:linear-gradient(135deg,var(--cog-blue) 0%,var(--cog-blue-dark) 100%);color:#fff;border-color:var(--cog-blue);}
+  .draft-btn:hover{border-color:var(--cog-blue);color:var(--cog-blue);}
+  .draft-btn.primary:hover{color:#fff;transform:translateY(-1px);}
+  .draft-btn.danger:hover{border-color:var(--cog-red);color:var(--cog-red);}
+
+  /* ─── TWO-COLUMN LAYOUT ────────────────────────────────────────────── */
+  .two-col{display:grid;grid-template-columns:1fr 460px;gap:22px;}
+  @media (max-width:980px){.two-col{grid-template-columns:1fr;}}
+
+  /* ─── STAT TILES ─────────────────────────────────────────────────────── */
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+  .stat-tile{background:#fff;border:1px solid var(--cog-border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-sm);}
+  .stat-tile-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cog-text-dim);margin-bottom:4px;}
+  .stat-tile-val{font-size:22px;font-weight:800;color:var(--cog-navy);line-height:1;}
+  .stat-tile.hi{border-color:#FCA5A5;background:linear-gradient(to right,#FFF5F5 0%,#fff 80%);}
+  .stat-tile.hi .stat-tile-val{color:var(--cog-red);}
+  .stat-tile.drafts{border-color:#FCD34D;background:linear-gradient(to right,#FFF7E6 0%,#fff 80%);}
+  .stat-tile.drafts .stat-tile-val{color:#D97706;}
+
+  /* ─── SIGNAL LIST ───────────────────────────────────────────────────── */
+  .list-card{background:#fff;border:1px solid var(--cog-border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);}
+  .list-hdr{padding:13px 16px;border-bottom:1px solid var(--cog-border);display:flex;align-items:center;justify-content:space-between;}
+  .list-title{font-size:14px;font-weight:700;color:var(--cog-navy);}
+  .list-count{font-size:11px;color:var(--cog-text-dim);font-weight:500;}
+  .signal-row{padding:14px 16px;border-bottom:1px solid var(--cog-border-soft);display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;}
+  .signal-row:last-child{border-bottom:none;}
+  .signal-row:hover{background:#FAFBFC;}
+  .signal-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;}
+  .comp-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--cog-blue-light);color:var(--cog-blue);}
+  .impact-dot{width:7px;height:7px;border-radius:50%;}
+  .impact-hi{background:var(--cog-red);} .impact-med{background:var(--cog-amber);} .impact-lo{background:var(--cog-green);}
+  .signal-date{font-size:11px;color:var(--cog-text-dim);}
+  .signal-headline{font-size:13.5px;font-weight:600;color:var(--cog-navy);line-height:1.45;margin-bottom:4px;}
+  .signal-desc{font-size:12px;color:var(--cog-text-muted);line-height:1.5;}
+  .signal-analyst{font-size:10.5px;color:var(--cog-text-dim);margin-top:6px;font-style:italic;}
+  .row-actions{display:flex;gap:6px;flex-shrink:0;}
+  .row-btn{background:#F8FAFC;border:1px solid var(--cog-border);color:var(--cog-text-muted);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .row-btn:hover{border-color:var(--cog-blue);color:var(--cog-blue);}
+  .row-btn.danger:hover{border-color:var(--cog-red);color:var(--cog-red);}
+
+  /* ─── FORM ──────────────────────────────────────────────────────────── */
+  .form-card{background:#fff;border:1px solid var(--cog-border);border-radius:12px;padding:0;box-shadow:var(--shadow-sm);height:fit-content;position:sticky;top:18px;}
+  .form-hdr{padding:14px 18px;border-bottom:1px solid var(--cog-border);display:flex;align-items:center;justify-content:space-between;}
+  .form-title{font-size:14px;font-weight:700;color:var(--cog-navy);display:flex;align-items:center;gap:8px;}
+  .form-title-dot{width:8px;height:8px;border-radius:50%;background:var(--cog-teal);}
+  .form-mode{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:#F1F4F9;color:var(--cog-text-muted);text-transform:uppercase;letter-spacing:.05em;}
+  .form-mode.editing{background:#FEF3C7;color:#78350F;}
+  .form-mode.publishing{background:#D1FAE5;color:#065F46;}
+  .form-body{padding:16px 18px;max-height:calc(100vh - 160px);overflow-y:auto;}
+  .form-section-title{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cog-text-dim);margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--cog-border-soft);}
+  .form-section-title:first-child{margin-top:0;}
+  .field{margin-bottom:11px;}
+  .field label{display:block;font-size:11px;font-weight:600;color:var(--cog-navy);margin-bottom:4px;}
+  .field input,.field textarea,.field select{width:100%;padding:8px 10px;border:1px solid var(--cog-border);border-radius:7px;font-size:12.5px;font-family:inherit;color:var(--cog-text);outline:none;transition:all .15s;background:#fff;}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--cog-blue);box-shadow:0 0 0 2px rgba(0,87,184,0.08);}
+  .field textarea{resize:vertical;min-height:60px;line-height:1.5;}
+  .field-help{font-size:10.5px;color:var(--cog-text-dim);margin-top:3px;font-style:italic;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+  .chip{font-size:10.5px;padding:3px 9px;border-radius:14px;border:1px solid var(--cog-border);background:#F8FAFC;color:var(--cog-text-muted);cursor:pointer;user-select:none;}
+  .chip.selected{background:var(--cog-blue-light);border-color:var(--cog-blue);color:var(--cog-blue);font-weight:600;}
+  .form-actions{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--cog-border);background:#FAFBFC;border-radius:0 0 12px 12px;}
+  .btn-primary{flex:1;padding:9px;background:linear-gradient(135deg,var(--cog-blue) 0%,var(--cog-blue-dark) 100%);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+  .btn-secondary{padding:9px 14px;background:#fff;border:1px solid var(--cog-border);color:var(--cog-text-muted);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-secondary:hover{border-color:var(--cog-text-muted);color:var(--cog-text);}
+
+  /* ─── TOAST & STATUS ────────────────────────────────────────────────── */
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--cog-navy);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(13,18,67,.2);z-index:1000;opacity:0;transition:all .25s;pointer-events:none;max-width:90%;text-align:center;}
+  .toast.visible{transform:translateX(-50%) translateY(0);opacity:1;}
+  .toast.error{background:var(--cog-red);}
+  .toast.success{background:#065F46;}
+  .empty{padding:40px 20px;text-align:center;color:var(--cog-text-dim);font-size:13px;}
+
+  /* ─── SCRAPE RESULT MODAL ──────────────────────────────────────────── */
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(13,18,67,.5);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px;}
+  .modal-overlay.visible{display:flex;}
+  .modal-card{background:#fff;border-radius:14px;padding:24px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(13,18,67,.3);}
+  .modal-title{font-size:18px;font-weight:800;color:var(--cog-navy);margin-bottom:6px;}
+  .modal-sub{font-size:13px;color:var(--cog-text-muted);margin-bottom:18px;}
+  .modal-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .modal-stat{background:#F8FAFC;border:1px solid var(--cog-border);border-radius:8px;padding:10px 12px;}
+  .modal-stat-label{font-size:10.5px;font-weight:600;color:var(--cog-text-muted);text-transform:uppercase;letter-spacing:.05em;}
+  .modal-stat-val{font-size:22px;font-weight:800;color:var(--cog-navy);margin-top:2px;}
+  .modal-stat.new .modal-stat-val{color:var(--cog-green);}
+  .modal-failures{background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#78350F;}
+  .modal-actions{display:flex;justify-content:flex-end;}
+  /* Sources modal (v0.4) */
+  .src-modal-card{background:#fff;border-radius:14px;padding:0;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(13,18,67,.3);max-height:88vh;display:flex;flex-direction:column;}
+  .src-modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--cog-border);display:flex;align-items:center;gap:10px;}
+  .src-modal-head .modal-title{margin:0;}
+  .src-modal-head .src-modal-close{margin-left:auto;background:none;border:none;font-size:18px;color:var(--cog-text-muted);cursor:pointer;padding:4px 8px;border-radius:6px;}
+  .src-modal-head .src-modal-close:hover{background:var(--cog-bg);color:var(--cog-text);}
+  .src-tabs{display:flex;gap:4px;padding:8px 22px 0;border-bottom:1px solid var(--cog-border);background:#fff;}
+  .src-tab{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--cog-text-muted);cursor:pointer;border-bottom:2px solid transparent;}
+  .src-tab.active{color:var(--cog-blue);border-bottom-color:var(--cog-blue);}
+  .src-list-body{overflow-y:auto;padding:14px 22px;flex:1;}
+  .src-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:11px 0;border-bottom:1px solid var(--cog-border);align-items:center;}
+  .src-row:last-child{border-bottom:none;}
+  .src-info{min-width:0;}
+  .src-info .src-name{font-size:13.5px;font-weight:600;color:var(--cog-navy);margin:0;}
+  .src-info .src-url{font-size:11px;color:var(--cog-text-muted);margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'SF Mono','Menlo',monospace;}
+  .src-info .src-meta{font-size:10.5px;color:var(--cog-text-dim);margin-top:3px;letter-spacing:.04em;text-transform:uppercase;}
+  .src-actions{display:flex;gap:6px;align-items:center;}
+  .src-toggle{width:36px;height:20px;background:#10B981;border-radius:11px;position:relative;cursor:pointer;border:none;padding:0;transition:background .15s;}
+  .src-toggle.off{background:#CBD5E0;}
+  .src-toggle::after{content:'';position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;left:18px;}
+  .src-toggle.off::after{left:2px;}
+  .src-icon-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--cog-border);background:#fff;color:var(--cog-text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;padding:0;}
+  .src-icon-btn:hover{background:var(--cog-bg);color:var(--cog-navy);}
+  .src-icon-btn.danger:hover{background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5;}
+  .src-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;border:1px dashed var(--cog-border);border-radius:8px;background:#fff;color:var(--cog-blue);font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;}
+  .src-add-btn:hover{background:#F0F7FF;border-color:var(--cog-blue);}
+  .src-form{padding:16px 22px 18px;border-top:1px solid var(--cog-border);background:#F8FAFC;display:none;}
+  .src-form.visible{display:block;}
+  .src-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .src-form .field{margin-bottom:10px;}
+  .src-form label{display:block;font-size:11px;font-weight:600;color:var(--cog-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+  .src-form input, .src-form select{width:100%;padding:7px 9px;border:1px solid var(--cog-border);border-radius:6px;font-size:13px;font-family:inherit;color:var(--cog-text);background:#fff;}
+  .src-form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+  .src-empty{padding:30px 12px;text-align:center;color:var(--cog-text-muted);font-size:13px;}
+  /* Manage sources button in header */
+  .manage-sources-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--cog-border);border-radius:8px;background:#fff;color:var(--cog-navy);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;}
+  .manage-sources-btn:hover{background:var(--cog-bg);border-color:var(--cog-text-muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <img class="cog-logo" src="/assets/cognizant-logo.png" alt="Cognizant" style="height:28px;width:auto;" />
+    <div class="brand-divider"></div>
+    <div class="brand-meta">
+      <span class="brand-product">CI Pulse — Admin</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--cog-border);border-radius:8px;padding:4px 10px;background:#fff;">
+      <label for="scrape-from-date" style="font-size:10px;color:var(--cog-text-dim);font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;">From</label>
+      <input type="date" id="scrape-from-date" style="border:none;font-size:12px;font-family:inherit;color:var(--cog-text);outline:none;background:transparent;padding:2px;">
+      <span style="color:var(--cog-border);font-weight:300;">|</span>
+      <label for="scrape-to-date" style="font-size:10px;color:var(--cog-text-dim);font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;">To</label>
+      <input type="date" id="scrape-to-date" style="border:none;font-size:12px;font-family:inherit;color:var(--cog-text);outline:none;background:transparent;padding:2px;">
+    </div>
+    <button class="scrape-btn" id="scrape-btn" onclick="triggerScrape()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      <span id="scrape-btn-text">Scrape latest news</span>
+    </button>
+    <button class="manage-sources-btn" onclick="openSourcesModal()" title="Manage scraping sources">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Manage sources
+    </button>
+    <button class="manage-sources-btn" onclick="openKnowHubModal()" title="Manage KnowHub links" style="margin-left:6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      KnowHub links
+    </button>
+    <a class="header-link" href="/" target="_blank">View as user ↗</a>
+    <form method="post" action="/admin/logout" style="display:inline">
+      <button type="submit" class="logout-btn">Sign out</button>
+    </form>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="page-title">Signals dashboard</div>
+  <div class="page-sub">Curate competitive intelligence signals. Use "Scrape latest news" to pull fresh articles, then review and publish.</div>
+
+  <!-- ═════════ DRAFTS SECTION (hidden when empty) ═════════ -->
+  <div class="drafts-section empty" id="drafts-section">
+    <div class="drafts-header">
+      <div class="drafts-title">
+        <div class="drafts-icon">!</div>
+        <div>
+          <div class="drafts-heading">Drafts awaiting review</div>
+          <div class="drafts-sub">Pre-filled by scraper. Add impact analysis and publish, or discard.</div>
+        </div>
+      </div>
+      <div class="drafts-count-badge" id="drafts-count">0</div>
+    </div>
+    <div class="drafts-grid" id="drafts-list"></div>
+  </div>
+
+  <!-- ═════════ STAT STRIP ═════════ -->
+  <div class="stat-strip">
+    <div class="stat-tile"><div class="stat-tile-label">Published</div><div class="stat-tile-val" id="stat-total">—</div></div>
+    <div class="stat-tile hi"><div class="stat-tile-label">High impact</div><div class="stat-tile-val" id="stat-hi">—</div></div>
+    <div class="stat-tile drafts"><div class="stat-tile-label">Drafts</div><div class="stat-tile-val" id="stat-drafts">—</div></div>
+    <div class="stat-tile"><div class="stat-tile-label">Competitors</div><div class="stat-tile-val" id="stat-comps">—</div></div>
+  </div>
+
+  <!-- ═════════ TWO-COLUMN: LIST + FORM ═════════ -->
+  <div class="two-col">
+    <div>
+      <div class="list-card">
+        <div class="list-hdr">
+          <div class="list-title">Published signals</div>
+          <div class="list-count" id="list-count">Loading...</div>
+        </div>
+        <div id="signal-list"><div class="empty">Loading...</div></div>
+      </div>
+
+      <!-- ═════════ DISCARDED SECTION (collapsible, hidden when empty) ═════════ -->
+      <div id="discarded-section" style="margin-top:18px;display:none;">
+        <div class="list-card" style="border-color:#E5E7EB;">
+          <div class="list-hdr" style="background:#F9FAFB;cursor:pointer;" onclick="toggleDiscardedSection()">
+            <div class="list-title" style="color:var(--cog-text-muted);display:flex;align-items:center;gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Discarded items
+            </div>
+            <div class="list-count" id="discarded-count">0</div>
+          </div>
+          <div id="discarded-list" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-hdr">
+        <div class="form-title"><div class="form-title-dot"></div><span id="form-title-text">Add new signal</span></div>
+        <span class="form-mode" id="form-mode">CREATE</span>
+      </div>
+      <div class="form-body">
+        <form id="signal-form" onsubmit="return false">
+          <input type="hidden" id="f-id" value="">
+          <input type="hidden" id="f-mode" value="create">
+
+          <div class="form-section-title">Article basics</div>
+          <div class="field-row">
+            <div class="field">
+              <label>Competitor</label>
+              <select id="f-competitor">
+                <option value="">Select…</option>
+                <option>Accenture</option><option>TCS</option><option>Infosys</option><option>Wipro</option>
+                <option>HCL Technologies</option><option>IBM</option><option>Deloitte</option><option>Capgemini</option>
+                <option>Tech Mahindra</option><option>Globant</option><option>Genpact</option><option>DXC Technology</option>
+                <option>Generic</option>
+              </select>
+            </div>
+            <div class="field"><label>Published date</label><input type="date" id="f-date" required></div>
+          </div>
+          <div class="field"><label>Headline</label><input type="text" id="f-headline" required maxlength="300"></div>
+          <div class="field"><label>Description / summary</label><textarea id="f-description" rows="3" required maxlength="1000"></textarea></div>
+          <div class="field"><label>Source URL</label><input type="url" id="f-url" required></div>
+
+          <div class="form-section-title">Classification</div>
+          <div class="field">
+            <label>Industry / vertical (pick one)</label>
+            <div class="chips" id="industry-chips"><span class="empty">Loading…</span></div>
+            <input type="text" id="f-industry-other" placeholder="Or type a custom industry…" style="margin-top:8px;display:none;" />
+          </div>
+          <div class="field">
+            <label>Topics — technology areas (pick any)</label>
+            <div class="chips" id="tech-topic-chips"><span class="empty">Loading…</span></div>
+          </div>
+          <div class="field">
+            <label>Topics — news category (pick any)</label>
+            <div class="chips" id="news-topic-chips"><span class="empty">Loading…</span></div>
+            <input type="text" id="f-topic-other" placeholder="Or type custom topic(s), comma-separated…" style="margin-top:8px;display:none;" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Impact</label>
+              <select id="f-impact" required>
+                <option value="hi">High</option><option value="med" selected>Medium</option><option value="lo">Low</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Source priority</label>
+              <select id="f-priority">
+                <option value="1">P1 · Official</option><option value="2">P2 · Media</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Source name</label><input type="text" id="f-source" required></div>
+
+          <div class="form-section-title">Analyst review</div>
+          <div class="field">
+            <label>Analyst review</label>
+            <textarea id="f-review" rows="5" placeholder="Your analysis: competitive implications, affected verticals, recommended response, intelligence gaps..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" id="submit-btn" onclick="submitForm()">Publish signal</button>
+        <button class="btn-secondary" onclick="resetForm()">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ═════════ SCRAPE RESULT MODAL ═════════ -->
+<div class="modal-overlay" id="scrape-modal">
+  <div class="modal-card" style="max-width:560px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title" id="scrape-modal-title">Scrape complete</div>
+    <div class="modal-sub" id="scrape-modal-sub"></div>
+    <div class="modal-stats">
+      <div class="modal-stat new"><div class="modal-stat-label">New drafts</div><div class="modal-stat-val" id="mst-new">0</div></div>
+      <div class="modal-stat"><div class="modal-stat-label">Duplicates skipped</div><div class="modal-stat-val" id="mst-dup">0</div></div>
+    </div>
+    <div class="modal-failures" id="mst-fail" style="display:none"></div>
+    <div id="mst-dups-section" style="display:none;margin-bottom:14px;">
+      <button id="mst-dups-toggle" onclick="toggleDupesList()" style="background:none;border:1px solid var(--cog-border);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;color:var(--cog-text-muted);cursor:pointer;font-family:inherit;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;">
+        <span>Show duplicates skipped</span>
+        <span id="mst-dups-caret">▾</span>
+      </button>
+      <div id="mst-dups-list" style="display:none;margin-top:8px;border:1px solid var(--cog-border);border-radius:8px;overflow:hidden;"></div>
+    </div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeScrapeModal()" style="flex:none">Got it</button></div>
+  </div>
+</div>
+
+<!-- ═════════ SOURCES MODAL (v0.4) ═════════ -->
+<div class="modal-overlay" id="sources-modal">
+  <div class="src-modal-card">
+    <div class="src-modal-head">
+      <div>
+        <div class="modal-title">Manage sources</div>
+        <div class="modal-sub" style="margin:0;">Add, edit, or disable the news sources scraped for drafts.</div>
+      </div>
+      <button class="src-modal-close" onclick="closeSourcesModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="src-tabs">
+      <span class="src-tab active" data-priority="1" onclick="setSourcesTab(1)">P1 · Official</span>
+      <span class="src-tab" data-priority="2" onclick="setSourcesTab(2)">P2 · Media</span>
+    </div>
+    <div class="src-list-body" id="src-list-body">
+      <div class="src-empty">Loading sources…</div>
+    </div>
+    <div class="src-form" id="src-form">
+      <div class="modal-title" style="font-size:14px;margin-bottom:10px;" id="src-form-title">Add new source</div>
+      <input type="hidden" id="src-form-id">
+      <div class="field">
+        <label>Name (display label)</label>
+        <input type="text" id="src-form-name" placeholder="e.g. Reuters — Accenture" />
+      </div>
+      <div class="field">
+        <label>URL (sitemap or listing page)</label>
+        <input type="url" id="src-form-url" placeholder="https://..." />
+      </div>
+      <div class="src-form-row">
+        <div class="field">
+          <label>Competitor</label>
+          <select id="src-form-competitor">
+            <option>Accenture</option><option>TCS</option><option>Infosys</option><option>Wipro</option><option>Capgemini</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Scraper type</label>
+          <select id="src-form-scraper-type">
+            <option value="sitemap">Sitemap XML</option>
+            <option value="html_listing">HTML listing page</option>
+            <option value="rss">RSS feed</option>
+          </select>
+        </div>
+      </div>
+      <div class="src-form-actions">
+        <button class="btn-secondary" onclick="hideSourceForm()" style="padding:7px 14px;font-size:12px;">Cancel</button>
+        <button class="btn-primary" onclick="saveSourceForm()" style="padding:7px 14px;font-size:12px;flex:none;" id="src-save-btn">Save source</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════ KNOWHUB LINKS MODAL (v0.5) ═════════ -->
+<div class="modal-overlay" id="knowhub-modal">
+  <div class="src-modal-card">
+    <div class="src-modal-head">
+      <div>
+        <div class="modal-title">Manage KnowHub links</div>
+        <div class="modal-sub" style="margin:0;">Auto-suggest internal Cognizant resources when signals match certain industries or topics.</div>
+      </div>
+      <button class="src-modal-close" onclick="closeKnowHubModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="src-list-body" id="kh-list-body" style="max-height:58vh;">
+      <div class="src-empty">Loading mappings…</div>
+    </div>
+    <div class="src-form" id="kh-form">
+      <div class="modal-title" style="font-size:14px;margin-bottom:10px;" id="kh-form-title">Add new mapping</div>
+      <input type="hidden" id="kh-form-id">
+      <div class="src-form-row">
+        <div class="field">
+          <label>Industry (blank = any)</label>
+          <select id="kh-form-industry">
+            <option value="">— Any industry —</option>
+            <!-- populated from taxonomy -->
+          </select>
+        </div>
+        <div class="field">
+          <label>Topic (blank = industry fallback)</label>
+          <select id="kh-form-topic">
+            <option value="">— Any topic (industry fallback) —</option>
+            <!-- populated from taxonomy -->
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Display label</label>
+        <input type="text" id="kh-form-label" placeholder="e.g. BFSI Sales Playbook" />
+      </div>
+      <div class="field">
+        <label>KnowHub URL</label>
+        <input type="url" id="kh-form-url" placeholder="https://knowhub.cognizant.com/..." />
+      </div>
+      <div class="src-form-actions">
+        <button class="btn-secondary" onclick="hideKnowHubForm()" style="padding:7px 14px;font-size:12px;">Cancel</button>
+        <button class="btn-primary" onclick="saveKnowHubForm()" style="padding:7px 14px;font-size:12px;flex:none;" id="kh-save-btn">Save mapping</button>
+      </div>
+    </div>
+    <button class="src-add-btn" onclick="showAddKnowHubForm()" id="kh-add-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add mapping
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── Toast ─────────────────────────────────────────────────────────────────
+function toast(msg, kind) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (kind || '') + ' visible';
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => t.classList.remove('visible'), 2800);
+}
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let allSignals = [];
+let allDrafts = [];
+let allDiscarded = [];
+let editingId = null;
+let publishingDraftId = null;
+let selectedIndustry = null;
+let selectedTopics = new Set();
+
+// ─── Taxonomy (loaded from /api/taxonomy on init) ──────────────────────────
+let taxonomy = { industries: [], tech_topics: [], news_topics: [], all_topics: [] };
+
+async function loadTaxonomy() {
+  try {
+    const r = await fetch('/api/taxonomy');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    taxonomy = await r.json();
+    buildChipRow('industry-chips', taxonomy.industries, 'industry', false);
+    buildChipRow('tech-topic-chips', taxonomy.tech_topics, 'topic', true);
+    buildChipRow('news-topic-chips', taxonomy.news_topics, 'topic', true);
+  } catch (e) {
+    console.warn('Taxonomy load failed:', e.message);
+    // Fallback to inline lists if API unreachable
+    buildChipRow('industry-chips', ['BFSI','Healthcare','Manufacturing','Retail & CPG','Insurance','Telecom','Energy & Utilities','Public Sector','Communications & Media','Life Sciences','Travel & Hospitality','Cross-industry'], 'industry', false);
+    buildChipRow('tech-topic-chips', ['AI & GenAI','Cloud','Data & Analytics','Cybersecurity','Sustainability','Quantum','Edge / IoT','Platform / SaaS'], 'topic', true);
+    buildChipRow('news-topic-chips', ['Contract win','Partnership','M&A','Leadership change','Product launch','Earnings','Layoff / restructure','Regulatory','IP / patent','Investment / funding','Strategy / direction'], 'topic', true);
+  }
+  // Populate KnowHub modal dropdowns
+  const khIndSel = document.getElementById('kh-form-industry');
+  const khTopicSel = document.getElementById('kh-form-topic');
+  if (khIndSel && taxonomy.industries) {
+    khIndSel.innerHTML = '<option value="">— Any industry —</option>' +
+      taxonomy.industries.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+  }
+  if (khTopicSel && taxonomy.all_topics) {
+    khTopicSel.innerHTML = '<option value="">— Any topic (industry fallback) —</option>' +
+      taxonomy.all_topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  }
+}
+
+function buildChipRow(containerId, values, kind, multi) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  // Append "Other" chip to industry row and news-topic row only
+  const withOther = (containerId === 'industry-chips' || containerId === 'news-topic-chips')
+    ? [...values, 'Other'] : values;
+  container.innerHTML = withOther.map(v =>
+    `<span class="chip" data-${kind}="${escapeHtml(v)}">${escapeHtml(v)}</span>`
+  ).join('');
+  // Wire click handlers
+  container.querySelectorAll('.chip').forEach(c => {
+    c.onclick = () => {
+      const val = c.dataset[kind];
+      if (kind === 'industry') {
+        document.querySelectorAll('#industry-chips .chip').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        selectedIndustry = val;
+        // Show/hide custom industry input
+        const otherInput = document.getElementById('f-industry-other');
+        if (otherInput) otherInput.style.display = (val === 'Other') ? 'block' : 'none';
+      } else {
+        if (selectedTopics.has(val)) { selectedTopics.delete(val); c.classList.remove('selected'); }
+        else { selectedTopics.add(val); c.classList.add('selected'); }
+        // Show/hide custom topic input when "Other" toggled
+        if (val === 'Other') {
+          const otherInput = document.getElementById('f-topic-other');
+          if (otherInput) otherInput.style.display = selectedTopics.has('Other') ? 'block' : 'none';
+        }
+      }
+    };
+  });
+}
+
+// ─── Load signals + drafts + discarded ─────────────────────────────────────
+async function loadAll() {
+  try {
+    const [sigR, draftR, discR] = await Promise.all([
+      fetch('/api/admin/signals'),
+      fetch('/api/admin/drafts'),
+      fetch('/api/admin/discarded'),
+    ]);
+    if (sigR.status === 401 || draftR.status === 401 || discR.status === 401) {
+      window.location.href = '/admin/login'; return;
+    }
+    allSignals = await sigR.json();
+    allDrafts = await draftR.json();
+    allDiscarded = discR.ok ? await discR.json() : [];
+    renderAll();
+  } catch (e) {
+    document.getElementById('signal-list').innerHTML = `<div class="empty">Could not load: ${e.message}</div>`;
+  }
+}
+
+// Strip the synthetic #cipulse-dup-<ts> suffix to get the real URL
+function cleanUrl(url) {
+  return (url || '').split('#cipulse-dup-')[0];
+}
+
+function renderAll() {
+  // Defensive sort — newest published date first, then by id desc for same-date ties.
+  const byDateDesc = (a, b) => {
+    const dateCompare = new Date(b.published_at) - new Date(a.published_at);
+    if (dateCompare !== 0) return dateCompare;
+    return (b.id || 0) - (a.id || 0);
+  };
+  allSignals.sort(byDateDesc);
+  allDrafts.sort(byDateDesc);
+  // Discarded sorted by discarded_at desc (most recently discarded on top)
+  allDiscarded.sort((a, b) => {
+    const da = a.discarded_at ? new Date(a.discarded_at) : new Date(0);
+    const db = b.discarded_at ? new Date(b.discarded_at) : new Date(0);
+    return db - da;
+  });
+
+  // Stats
+  document.getElementById('stat-total').textContent = allSignals.length;
+  document.getElementById('stat-hi').textContent = allSignals.filter(s => s.impact === 'hi').length;
+  document.getElementById('stat-drafts').textContent = allDrafts.length;
+  document.getElementById('stat-comps').textContent = new Set(allSignals.map(s => s.competitor)).size;
+
+  // Drafts
+  const draftsSec = document.getElementById('drafts-section');
+  if (allDrafts.length) {
+    draftsSec.classList.remove('empty');
+    document.getElementById('drafts-count').textContent = `${allDrafts.length} pending`;
+    document.getElementById('drafts-list').innerHTML = allDrafts.map(d => {
+      const realUrl = cleanUrl(d.url);
+      const isDup = d.url !== realUrl;
+      const sourceBadgeStyle = d.source_priority === 2
+        ? 'background:#FEE9D6;color:#9A3412;'
+        : 'background:var(--cog-blue-light);color:var(--cog-blue);';
+      return `
+      <div class="draft-card">
+        <div>
+          <div class="draft-meta">
+            <span class="draft-comp-badge">${escapeHtml(d.competitor)}</span>
+            <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;${sourceBadgeStyle}">P${d.source_priority || 1}</span>
+            ${isDup ? '<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:#E0E7FF;color:#3730A3;">DUP</span>' : ''}
+            <span class="draft-impact-dot ${d.impact}" title="Suggested impact: ${d.impact}"></span>
+            <span class="draft-date">${formatDate(d.published_at)}</span>
+          </div>
+          <div class="draft-headline">${escapeHtml(d.headline)}</div>
+          <div class="draft-source">${escapeHtml(d.source)} · <a href="${escapeHtml(realUrl)}" target="_blank" style="color:var(--cog-blue)">view article ↗</a></div>
+          <div class="draft-suggested">Suggested: ${d.tags.length ? '<b>' + escapeHtml(d.tags.join(', ')) + '</b>' : '<i>no type</i>'} · ${d.topics.length ? '<b>' + escapeHtml(d.topics.join(', ')) + '</b>' : '<i>no topics</i>'}</div>
+        </div>
+        <div class="draft-actions">
+          <button class="draft-btn primary" onclick="reviewDraft(${d.id})">Review &amp; publish</button>
+          <button class="draft-btn danger" onclick="discardDraft(${d.id})">Discard</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    draftsSec.classList.add('empty');
+  }
+
+  // Signal list
+  document.getElementById('list-count').textContent = allSignals.length + ' total';
+  const list = document.getElementById('signal-list');
+  if (!allSignals.length) {
+    list.innerHTML = '<div class="empty">No published signals yet.</div>';
+  } else {
+    list.innerHTML = allSignals.map(s => `
+    <div class="signal-row">
+      <div>
+        <div class="signal-meta">
+          <span class="comp-badge">${escapeHtml(s.competitor)}</span>
+          <span class="impact-dot impact-${s.impact}"></span>
+          <span class="signal-date">${formatDate(s.published_at)}</span>
+        </div>
+        <div class="signal-headline">${escapeHtml(s.headline)}</div>
+        <div class="signal-desc">${escapeHtml(truncate(s.description, 180))}</div>
+        ${s.analyst_name ? `<div class="signal-analyst">Analysis by ${escapeHtml(s.analyst_name)}</div>` : ''}
+      </div>
+      <div class="row-actions">
+        <button class="row-btn" onclick="editSignal(${s.id})">Edit</button>
+        <button class="row-btn danger" onclick="deleteSignal(${s.id})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+  }
+
+  // ─── Discarded items section ────────────────────────────────────────────
+  const discSec = document.getElementById('discarded-section');
+  const discCount = document.getElementById('discarded-count');
+  const discList = document.getElementById('discarded-list');
+  if (allDiscarded.length) {
+    discSec.style.display = 'block';
+    discCount.textContent = `${allDiscarded.length} item${allDiscarded.length === 1 ? '' : 's'}`;
+    discList.innerHTML = allDiscarded.map(d => {
+      const realUrl = cleanUrl(d.url);
+      const wasStatus = d.discarded_at ? 'discarded' : (d.status || 'unknown');
+      return `
+      <div style="padding:11px 16px;border-bottom:1px solid var(--cog-border-soft);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;opacity:0.85;">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+            <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;background:#F3F4F6;color:var(--cog-text-muted);">${escapeHtml(d.competitor)}</span>
+            <span style="font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;background:${d.source_priority === 2 ? '#FEE9D6;color:#9A3412;' : 'var(--cog-blue-light);color:var(--cog-blue);'}">P${d.source_priority || 1}</span>
+            <span style="font-size:10px;color:var(--cog-text-dim);">Published ${formatDate(d.published_at)}</span>
+            ${d.discarded_at ? `<span style="font-size:10px;color:var(--cog-red);">· Discarded ${formatDate(d.discarded_at)}</span>` : ''}
+          </div>
+          <div style="font-size:12.5px;color:var(--cog-text);line-height:1.4;text-decoration:line-through;text-decoration-color:#9CA3AF;">${escapeHtml(d.headline)}</div>
+          <a href="${escapeHtml(realUrl)}" target="_blank" style="font-size:10.5px;color:var(--cog-text-dim);">view article ↗</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <button class="row-btn" onclick="restoreSignal(${d.id})" title="Restore to drafts">Restore</button>
+          <button class="row-btn danger" onclick="hardDeleteSignal(${d.id})" title="Permanently delete">Delete forever</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    discSec.style.display = 'none';
+  }
+}
+
+function toggleDiscardedSection() {
+  const list = document.getElementById('discarded-list');
+  list.style.display = (list.style.display === 'none' || !list.style.display) ? 'block' : 'none';
+}
+
+async function restoreSignal(id) {
+  try {
+    const r = await fetch(`/api/admin/signals/${id}/restore`, { method: 'POST' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('Restored to drafts ✓', 'success');
+    await loadAll();
+  } catch (e) {
+    toast('Restore failed: ' + e.message, 'error');
+  }
+}
+
+async function hardDeleteSignal(id) {
+  if (!confirm('Permanently delete this signal? This cannot be undone.')) return;
+  try {
+    const r = await fetch(`/api/admin/signals/${id}?hard=true`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('Permanently deleted');
+    await loadAll();
+  } catch (e) {
+    toast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+// ─── Scrape ────────────────────────────────────────────────────────────────
+async function triggerScrape() {
+  const btn = document.getElementById('scrape-btn');
+  const text = document.getElementById('scrape-btn-text');
+  const fromDate = document.getElementById('scrape-from-date').value;
+  const toDate = document.getElementById('scrape-to-date').value;
+
+  // Validate range
+  if (fromDate && toDate && fromDate > toDate) {
+    toast('From date must be before or equal to To date', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  text.innerHTML = '<span class="spinner"></span> Scraping...';
+  text.style.display = 'flex'; text.style.alignItems = 'center'; text.style.gap = '8px';
+
+  try {
+    const params = new URLSearchParams();
+    if (fromDate) params.set('from_date', fromDate);
+    if (toDate) params.set('to_date', toDate);
+    if (!fromDate && !toDate) params.set('days', '14');
+    const endpoint = '/api/admin/scrape?' + params.toString();
+
+    const r = await fetch(endpoint, { method: 'POST' });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const result = await r.json();
+    showScrapeModal(result);
+    await loadAll();
+  } catch (e) {
+    toast('Scrape failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    text.innerHTML = 'Scrape latest news';
+    text.style.display = ''; text.style.alignItems = ''; text.style.gap = '';
+  }
+}
+
+function showScrapeModal(result) {
+  document.getElementById('mst-new').textContent = result.new_drafts;
+  document.getElementById('mst-dup').textContent = result.duplicates_skipped;
+  document.getElementById('scrape-modal-sub').textContent =
+    `Found ${result.total_articles_found} articles in ${result.duration_seconds}s.`;
+
+  // Failed sources
+  const failDiv = document.getElementById('mst-fail');
+  if (result.failed_sources && result.failed_sources.length) {
+    failDiv.innerHTML = `<b>${result.failed_sources.length} source(s) failed:</b> ${result.failed_sources.map(f => escapeHtml(f.source)).join(', ')}. You can still enter these manually.`;
+    failDiv.style.display = 'block';
+  } else {
+    failDiv.style.display = 'none';
+  }
+
+  // Duplicates section
+  const dupsSection = document.getElementById('mst-dups-section');
+  const dupsList = document.getElementById('mst-dups-list');
+  if (result.duplicates && result.duplicates.length) {
+    dupsSection.style.display = 'block';
+    // Stash the duplicate details globally so the Add-anyway button can find them by index
+    window.__lastDuplicates = result.duplicates;
+    dupsList.innerHTML = result.duplicates.map((d, idx) => `
+      <div style="padding:10px 12px;border-bottom:1px solid var(--cog-border-soft);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+            <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;background:${d.existing_status === 'draft' ? '#FEF3C7' : 'var(--cog-blue-light)'};color:${d.existing_status === 'draft' ? '#78350F' : 'var(--cog-blue)'};text-transform:uppercase;">${d.existing_status}</span>
+            <span style="font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;background:${d.scraped_source_priority === 2 ? '#FEE9D6;color:#9A3412;' : 'var(--cog-blue-light);color:var(--cog-blue);'}">P${d.scraped_source_priority || 1}</span>
+            <span style="font-size:10px;font-weight:600;color:var(--cog-text-muted);">${escapeHtml(d.scraped_competitor)}</span>
+            <span style="font-size:10px;color:var(--cog-text-dim);">${formatDate(d.scraped_published_at)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--cog-navy);line-height:1.4;font-weight:500;">${escapeHtml(d.scraped_headline)}</div>
+          <a href="${escapeHtml(d.scraped_url)}" target="_blank" style="font-size:10.5px;color:var(--cog-text-dim);text-decoration:none;">view source ↗</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:stretch;min-width:120px;">
+          <button class="row-btn" onclick="addDuplicateAsDraft(${idx}, this)" style="white-space:nowrap;background:#F0FDF4;border-color:#86EFAC;color:#166534;">Add as draft anyway</button>
+          <button class="row-btn danger" onclick="discardExisting(${d.existing_id}, this)" style="white-space:nowrap;">Discard from DB</button>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    dupsSection.style.display = 'none';
+    dupsList.style.display = 'none';
+    document.getElementById('mst-dups-caret').textContent = '▾';
+  }
+
+  document.getElementById('scrape-modal').classList.add('visible');
+}
+
+async function addDuplicateAsDraft(idx, btn) {
+  const dup = (window.__lastDuplicates || [])[idx];
+  if (!dup) return;
+  btn.disabled = true;
+  btn.textContent = 'Adding...';
+  try {
+    const r = await fetch('/api/admin/drafts/add_duplicate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        competitor: dup.scraped_competitor,
+        headline: dup.scraped_headline,
+        description: dup.scraped_description || dup.scraped_headline,
+        url: dup.scraped_url,
+        published_at: dup.scraped_published_at,
+        source: dup.scraped_source || 'Unknown',
+        source_priority: dup.scraped_source_priority || 1,
+        suggested_tag: dup.scraped_suggested_tag,
+        suggested_topics: dup.scraped_suggested_topics || [],
+        suggested_impact: dup.scraped_suggested_impact || 'med',
+      }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    btn.textContent = 'Added ✓';
+    btn.style.background = '#DCFCE7';
+    toast('Added as new draft (marked DUP)', 'success');
+    await loadAll();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Add as draft anyway';
+    toast('Could not add: ' + e.message, 'error');
+  }
+}
+
+function toggleDupesList() {
+  const list = document.getElementById('mst-dups-list');
+  const caret = document.getElementById('mst-dups-caret');
+  if (list.style.display === 'none' || !list.style.display) {
+    list.style.display = 'block';
+    caret.textContent = '▴';
+  } else {
+    list.style.display = 'none';
+    caret.textContent = '▾';
+  }
+}
+
+async function discardExisting(id, btn) {
+  if (!confirm('Discard this signal from the database? This deletes the existing entry permanently — both draft and published states.')) return;
+  btn.disabled = true;
+  btn.textContent = 'Discarding...';
+  try {
+    const r = await fetch(`/api/admin/signals/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    btn.textContent = 'Discarded ✓';
+    btn.style.opacity = '0.5';
+    toast('Signal discarded from DB');
+    // Reload the underlying lists
+    await loadAll();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Discard from DB';
+    toast('Discard failed: ' + e.message, 'error');
+  }
+}
+
+function closeScrapeModal() {
+  document.getElementById('scrape-modal').classList.remove('visible');
+}
+
+// ─── Review draft → load into form for publish ────────────────────────────
+function reviewDraft(id) {
+  const d = allDrafts.find(x => x.id === id);
+  if (!d) return;
+  publishingDraftId = id;
+  editingId = null;
+  populateForm(d);
+  document.getElementById('form-title-text').textContent = 'Review draft — add analysis to publish';
+  const mode = document.getElementById('form-mode');
+  mode.textContent = 'REVIEWING';
+  mode.className = 'form-mode publishing';
+  document.getElementById('submit-btn').textContent = 'Publish signal';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Draft loaded — add impact analysis, then click Publish');
+}
+
+async function discardDraft(id) {
+  const d = allDrafts.find(x => x.id === id);
+  if (!d) return;
+  if (!confirm(`Discard this draft?\n\n"${truncate(d.headline, 100)}"\n\nIt will move to the Discarded section where you can restore it later if needed.`)) return;
+  try {
+    const r = await fetch(`/api/admin/signals/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('Draft moved to Discarded');
+    if (publishingDraftId === id) resetForm();
+    await loadAll();
+  } catch (e) {
+    toast('Discard failed: ' + e.message, 'error');
+  }
+}
+
+// ─── Form submit (create | update | publish-draft) ─────────────────────────
+async function submitForm() {
+  const headline = document.getElementById('f-headline').value.trim();
+  const description = document.getElementById('f-description').value.trim();
+  let competitor = document.getElementById('f-competitor').value;
+  const url = document.getElementById('f-url').value.trim();
+  const date = document.getElementById('f-date').value;
+  const source = document.getElementById('f-source').value.trim();
+
+  if (!headline || !description || !url || !date || !source) {
+    toast('Please fill in all required fields', 'error'); return;
+  }
+  if (!competitor) competitor = 'Generic';  // Default to Generic if not specified
+  if (!selectedIndustry) { toast('Please select an industry', 'error'); return; }
+
+  // Resolve "Other" industry to the custom typed value
+  let industryValue = selectedIndustry;
+  if (selectedIndustry === 'Other') {
+    const customInd = document.getElementById('f-industry-other').value.trim();
+    if (!customInd) { toast('Please type a custom industry', 'error'); return; }
+    industryValue = customInd;
+  }
+
+  // Resolve "Other" topic — replace the literal "Other" with the custom typed values
+  let topicsList = Array.from(selectedTopics);
+  if (selectedTopics.has('Other')) {
+    topicsList = topicsList.filter(t => t !== 'Other');
+    const customTopics = document.getElementById('f-topic-other').value.trim();
+    if (customTopics) {
+      customTopics.split(',').forEach(t => { const tt = t.trim(); if (tt) topicsList.push(tt); });
+    }
+  }
+
+  const sourceType = ['official','financial','media'][parseInt(document.getElementById('f-priority').value) - 1] || 'official';
+
+  // For backward compat: keep `tags` populated with the first news topic selected
+  const newsSet = new Set(taxonomy.news_topics || []);
+  const firstNewsTopic = topicsList.find(t => newsSet.has(t));
+  const legacyTags = firstNewsTopic ? [firstNewsTopic] : [];
+
+  const payload = {
+    competitor, headline, description, url,
+    industry: industryValue,
+    tags: legacyTags,
+    topics: topicsList,
+    impact: document.getElementById('f-impact').value,
+    source, source_type: sourceType,
+    source_priority: parseInt(document.getElementById('f-priority').value),
+    published_at: new Date(date + 'T12:00:00Z').toISOString(),
+    analyst_review: document.getElementById('f-review').value.trim() || null,
+    status: 'published',
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = publishingDraftId ? 'Publishing...' : (editingId ? 'Updating...' : 'Publishing...');
+
+  try {
+    let endpoint, method;
+    if (publishingDraftId) {
+      endpoint = `/api/admin/drafts/${publishingDraftId}/publish`; method = 'POST';
+    } else if (editingId) {
+      endpoint = `/api/admin/signals/${editingId}`; method = 'PUT';
+    } else {
+      endpoint = '/api/admin/signals'; method = 'POST';
+    }
+    const r = await fetch(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || 'HTTP ' + r.status); }
+    toast(publishingDraftId ? 'Draft published ✓' : (editingId ? 'Signal updated ✓' : 'Signal published ✓'), 'success');
+    resetForm();
+    await loadAll();
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = publishingDraftId ? 'Publish signal' : (editingId ? 'Update signal' : 'Publish signal');
+  }
+}
+
+// ─── Edit ──────────────────────────────────────────────────────────────────
+function editSignal(id) {
+  const s = allSignals.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  publishingDraftId = null;
+  populateForm(s);
+  document.getElementById('form-title-text').textContent = 'Edit signal #' + id;
+  const mode = document.getElementById('form-mode');
+  mode.textContent = 'EDITING';
+  mode.className = 'form-mode editing';
+  document.getElementById('submit-btn').textContent = 'Update signal';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function populateForm(s) {
+  document.getElementById('f-id').value = s.id;
+  document.getElementById('f-competitor').value = s.competitor;
+  document.getElementById('f-date').value = (s.published_at || '').split('T')[0];
+  document.getElementById('f-headline').value = s.headline;
+  document.getElementById('f-description').value = s.description;
+  document.getElementById('f-url').value = s.url;
+  document.getElementById('f-impact').value = s.impact;
+  document.getElementById('f-priority').value = String(s.source_priority);
+  document.getElementById('f-source').value = s.source;
+  document.getElementById('f-review').value = s.analyst_review || '';
+
+  // Industry: if value isn't a predefined chip, treat as "Other" + custom text
+  const knownIndustries = (taxonomy.industries || ['BFSI','Healthcare','Manufacturing','Retail & CPG','Insurance','Telecom','Energy & Utilities','Public Sector','Communications & Media','Life Sciences','Travel & Hospitality','Cross-industry']);
+  const indOther = document.getElementById('f-industry-other');
+  if (s.industry && !knownIndustries.includes(s.industry)) {
+    selectedIndustry = 'Other';
+    document.querySelectorAll('#industry-chips .chip').forEach(c => c.classList.toggle('selected', c.dataset.industry === 'Other'));
+    if (indOther) { indOther.style.display = 'block'; indOther.value = s.industry; }
+  } else {
+    selectedIndustry = s.industry || null;
+    document.querySelectorAll('#industry-chips .chip').forEach(c => c.classList.toggle('selected', c.dataset.industry === selectedIndustry));
+    if (indOther) { indOther.style.display = 'none'; indOther.value = ''; }
+  }
+
+  // Topics: separate known from custom
+  const knownTopics = new Set([...(taxonomy.tech_topics || []), ...(taxonomy.news_topics || [])]);
+  const allTopics = s.topics || [];
+  const customTopics = allTopics.filter(t => !knownTopics.has(t));
+  selectedTopics = new Set(allTopics.filter(t => knownTopics.has(t)));
+  const topicOther = document.getElementById('f-topic-other');
+  if (customTopics.length) {
+    selectedTopics.add('Other');
+    if (topicOther) { topicOther.style.display = 'block'; topicOther.value = customTopics.join(', '); }
+  } else {
+    if (topicOther) { topicOther.style.display = 'none'; topicOther.value = ''; }
+  }
+  document.querySelectorAll('#tech-topic-chips .chip, #news-topic-chips .chip').forEach(c =>
+    c.classList.toggle('selected', selectedTopics.has(c.dataset.topic))
+  );
+}
+
+// ─── Delete (soft — moves to Discarded section, restorable) ──────────────
+async function deleteSignal(id) {
+  const s = allSignals.find(x => x.id === id);
+  if (!s) return;
+  if (!confirm(`Move this signal to Discarded?\n\n"${truncate(s.headline, 100)}"\n\nIt will be removed from the public feed but kept in the Discarded section where you can restore it. To permanently delete, use "Delete forever" from the Discarded section.`)) return;
+  try {
+    const r = await fetch(`/api/admin/signals/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('Moved to Discarded');
+    if (editingId === id) resetForm();
+    await loadAll();
+  } catch (e) {
+    toast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+// ─── Reset form ────────────────────────────────────────────────────────────
+function resetForm() {
+  editingId = null;
+  publishingDraftId = null;
+  document.getElementById('signal-form').reset();
+  selectedIndustry = null;
+  selectedTopics.clear();
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  // Hide and clear custom "Other" inputs
+  const indOther = document.getElementById('f-industry-other');
+  const topicOther = document.getElementById('f-topic-other');
+  if (indOther) { indOther.style.display = 'none'; indOther.value = ''; }
+  if (topicOther) { topicOther.style.display = 'none'; topicOther.value = ''; }
+  document.getElementById('f-impact').value = 'med';
+  document.getElementById('f-priority').value = '1';
+  document.getElementById('form-title-text').textContent = 'Add new signal';
+  const mode = document.getElementById('form-mode');
+  mode.textContent = 'CREATE';
+  mode.className = 'form-mode';
+  document.getElementById('submit-btn').textContent = 'Publish signal';
+  document.getElementById('f-date').valueAsDate = new Date();
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────
+function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function truncate(s, n) { s = s || ''; return s.length > n ? s.slice(0, n).trim() + '…' : s; }
+function formatDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+// ─── SOURCES MODAL (v0.4) ────────────────────────────────────────────────
+let sourcesActiveTab = 1;
+let sourcesCache = [];
+let editingSourceId = null;
+
+function openSourcesModal() {
+  document.getElementById('sources-modal').classList.add('visible');
+  hideSourceForm();
+  loadSources();
+}
+function closeSourcesModal() {
+  document.getElementById('sources-modal').classList.remove('visible');
+}
+function setSourcesTab(priority) {
+  sourcesActiveTab = priority;
+  document.querySelectorAll('.src-tab').forEach(t =>
+    t.classList.toggle('active', parseInt(t.dataset.priority) === priority)
+  );
+  renderSources();
+}
+
+async function loadSources() {
+  const body = document.getElementById('src-list-body');
+  body.innerHTML = '<div class="src-empty">Loading sources…</div>';
+  try {
+    const r = await fetch('/api/admin/sources');
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    sourcesCache = await r.json();
+    renderSources();
+  } catch (e) {
+    body.innerHTML = `<div class="src-empty">Could not load sources: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderSources() {
+  const body = document.getElementById('src-list-body');
+  const rows = sourcesCache.filter(s => s.priority === sourcesActiveTab);
+  if (!rows.length) {
+    body.innerHTML = `<div class="src-empty">No P${sourcesActiveTab} sources yet. Click "Add P${sourcesActiveTab} source" below to add one.</div>`;
+  } else {
+    body.innerHTML = rows.map(s => `
+      <div class="src-row">
+        <div class="src-info">
+          <p class="src-name">${escapeHtml(s.name)}</p>
+          <p class="src-url" title="${escapeHtml(s.url)}">${escapeHtml(s.url)}</p>
+          <p class="src-meta">${escapeHtml(s.competitor)} · ${escapeHtml(s.scraper_type)}</p>
+        </div>
+        <div class="src-actions">
+          <button class="src-toggle ${s.enabled ? '' : 'off'}"
+                  onclick="toggleSource(${s.id})"
+                  title="${s.enabled ? 'Click to disable' : 'Click to enable'}"
+                  aria-label="${s.enabled ? 'Enabled' : 'Disabled'}"></button>
+          <button class="src-icon-btn" onclick="editSource(${s.id})" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="src-icon-btn danger" onclick="deleteSource(${s.id})" title="Delete permanently">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('') + `
+      <button class="src-add-btn" onclick="showAddSourceForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add P${sourcesActiveTab} source
+      </button>
+    `;
+  }
+  if (!rows.length) {
+    body.innerHTML += `
+      <button class="src-add-btn" onclick="showAddSourceForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add P${sourcesActiveTab} source
+      </button>`;
+  }
+}
+
+function showAddSourceForm() {
+  editingSourceId = null;
+  document.getElementById('src-form-title').textContent = `Add new P${sourcesActiveTab} source`;
+  document.getElementById('src-form-id').value = '';
+  document.getElementById('src-form-name').value = '';
+  document.getElementById('src-form-url').value = '';
+  document.getElementById('src-form-competitor').value = 'Accenture';
+  document.getElementById('src-form-scraper-type').value = sourcesActiveTab === 1 ? 'sitemap' : 'html_listing';
+  document.getElementById('src-save-btn').textContent = 'Save source';
+  document.getElementById('src-form').classList.add('visible');
+}
+
+function editSource(id) {
+  const s = sourcesCache.find(x => x.id === id);
+  if (!s) return;
+  editingSourceId = id;
+  document.getElementById('src-form-title').textContent = `Edit source #${id}`;
+  document.getElementById('src-form-id').value = id;
+  document.getElementById('src-form-name').value = s.name;
+  document.getElementById('src-form-url').value = s.url;
+  document.getElementById('src-form-competitor').value = s.competitor;
+  document.getElementById('src-form-scraper-type').value = s.scraper_type;
+  document.getElementById('src-save-btn').textContent = 'Update source';
+  document.getElementById('src-form').classList.add('visible');
+}
+
+function hideSourceForm() {
+  document.getElementById('src-form').classList.remove('visible');
+}
+
+async function saveSourceForm() {
+  const name = document.getElementById('src-form-name').value.trim();
+  const url = document.getElementById('src-form-url').value.trim();
+  const competitor = document.getElementById('src-form-competitor').value;
+  const scraper_type = document.getElementById('src-form-scraper-type').value;
+  if (!name || !url || !competitor) {
+    toast('Name, URL and competitor are required', 'error'); return;
+  }
+  const payload = { name, url, priority: sourcesActiveTab, scraper_type, competitor, enabled: true };
+  const btn = document.getElementById('src-save-btn');
+  btn.disabled = true;
+  try {
+    const endpoint = editingSourceId ? `/api/admin/sources/${editingSourceId}` : '/api/admin/sources';
+    const method = editingSourceId ? 'PUT' : 'POST';
+    const r = await fetch(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || 'HTTP ' + r.status); }
+    toast(editingSourceId ? 'Source updated ✓' : 'Source added ✓', 'success');
+    hideSourceForm();
+    await loadSources();
+  } catch (e) {
+    toast('Save failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleSource(id) {
+  try {
+    const r = await fetch(`/api/admin/sources/${id}/toggle`, { method: 'PATCH' });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await loadSources();
+  } catch (e) {
+    toast('Toggle failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteSource(id) {
+  const s = sourcesCache.find(x => x.id === id);
+  if (!s) return;
+  if (!confirm(`Permanently delete this source?\n\n"${s.name}"\n\nThis cannot be undone. To temporarily stop using it, use the toggle instead.`)) return;
+  try {
+    const r = await fetch(`/api/admin/sources/${id}`, { method: 'DELETE' });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('Source deleted');
+    await loadSources();
+  } catch (e) {
+    toast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+// ─── KNOWHUB MAPPING MODAL (v0.5) ───────────────────────────────────────────
+let knowhubCache = [];
+let editingKnowHubId = null;
+
+function openKnowHubModal() {
+  document.getElementById('knowhub-modal').classList.add('visible');
+  hideKnowHubForm();
+  loadKnowHubMappings();
+}
+function closeKnowHubModal() {
+  document.getElementById('knowhub-modal').classList.remove('visible');
+}
+
+async function loadKnowHubMappings() {
+  const body = document.getElementById('kh-list-body');
+  body.innerHTML = '<div class="src-empty">Loading mappings…</div>';
+  try {
+    const r = await fetch('/api/admin/knowhub');
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    knowhubCache = await r.json();
+    renderKnowHubMappings();
+  } catch (e) {
+    body.innerHTML = `<div class="src-empty">Could not load mappings: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderKnowHubMappings() {
+  const body = document.getElementById('kh-list-body');
+  if (!knowhubCache.length) {
+    body.innerHTML = `<div class="src-empty">No KnowHub mappings yet. Click "Add mapping" below to create one.</div>`;
+    return;
+  }
+  body.innerHTML = knowhubCache.map(m => {
+    const indLabel = m.industry || '<em>Any industry</em>';
+    const topicLabel = m.topic || '<em>Any topic (fallback)</em>';
+    return `
+      <div class="src-row">
+        <div class="src-info">
+          <p class="src-name">${escapeHtml(m.label)}</p>
+          <p class="src-url" title="${escapeHtml(m.url)}">${escapeHtml(m.url)}</p>
+          <p class="src-meta">${indLabel} · ${topicLabel}</p>
+        </div>
+        <div class="src-actions">
+          <button class="src-icon-btn" onclick="editKnowHubMapping(${m.id})" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="src-icon-btn danger" onclick="deleteKnowHubMapping(${m.id})" title="Delete">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showAddKnowHubForm() {
+  editingKnowHubId = null;
+  document.getElementById('kh-form-title').textContent = 'Add new mapping';
+  document.getElementById('kh-form-id').value = '';
+  document.getElementById('kh-form-industry').value = '';
+  document.getElementById('kh-form-topic').value = '';
+  document.getElementById('kh-form-label').value = '';
+  document.getElementById('kh-form-url').value = '';
+  document.getElementById('kh-save-btn').textContent = 'Save mapping';
+  document.getElementById('kh-form').classList.add('visible');
+  document.getElementById('kh-add-btn').style.display = 'none';
+}
+
+function editKnowHubMapping(id) {
+  const m = knowhubCache.find(x => x.id === id);
+  if (!m) return;
+  editingKnowHubId = id;
+  document.getElementById('kh-form-title').textContent = `Edit mapping #${id}`;
+  document.getElementById('kh-form-id').value = id;
+  document.getElementById('kh-form-industry').value = m.industry || '';
+  document.getElementById('kh-form-topic').value = m.topic || '';
+  document.getElementById('kh-form-label').value = m.label;
+  document.getElementById('kh-form-url').value = m.url;
+  document.getElementById('kh-save-btn').textContent = 'Update mapping';
+  document.getElementById('kh-form').classList.add('visible');
+  document.getElementById('kh-add-btn').style.display = 'none';
+}
+
+function hideKnowHubForm() {
+  document.getElementById('kh-form').classList.remove('visible');
+  document.getElementById('kh-add-btn').style.display = 'flex';
+}
+
+async function saveKnowHubForm() {
+  const label = document.getElementById('kh-form-label').value.trim();
+  const url = document.getElementById('kh-form-url').value.trim();
+  const industry = document.getElementById('kh-form-industry').value || null;
+  const topic = document.getElementById('kh-form-topic').value || null;
+  if (!label || !url) {
+    toast('Label and URL are required', 'error'); return;
+  }
+  const payload = { industry, topic, label, url };
+  const btn = document.getElementById('kh-save-btn');
+  btn.disabled = true;
+  try {
+    const endpoint = editingKnowHubId ? `/api/admin/knowhub/${editingKnowHubId}` : '/api/admin/knowhub';
+    const method = editingKnowHubId ? 'PUT' : 'POST';
+    const r = await fetch(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || 'HTTP ' + r.status); }
+    toast(editingKnowHubId ? 'Mapping updated ✓' : 'Mapping added ✓', 'success');
+    hideKnowHubForm();
+    await loadKnowHubMappings();
+  } catch (e) {
+    toast('Save failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteKnowHubMapping(id) {
+  const m = knowhubCache.find(x => x.id === id);
+  if (!m) return;
+  if (!confirm(`Delete this KnowHub mapping?\n\n"${m.label}"\n\nThis cannot be undone.`)) return;
+  try {
+    const r = await fetch(`/api/admin/knowhub/${id}`, { method: 'DELETE' });
+    if (r.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    toast('Mapping deleted');
+    await loadKnowHubMappings();
+  } catch (e) {
+    toast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+// Default: From = 14 days ago, To = today
+(function() {
+  const today = new Date();
+  const fromD = new Date();
+  fromD.setDate(today.getDate() - 14);
+  document.getElementById('scrape-from-date').valueAsDate = fromD;
+  document.getElementById('scrape-to-date').valueAsDate = today;
+})();
+
+resetForm();
+loadTaxonomy();
+loadAll();
+</script>
+</body>
+</html>
